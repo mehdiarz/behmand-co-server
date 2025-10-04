@@ -29,7 +29,7 @@ app.use(cors({
 }));
 
 // برای اطمینان از پاسخ به preflight
-app.options("*", cors());
+app.options("/api/*", cors());
 
 app.use(morgan("dev"));
 app.use(express.json());
