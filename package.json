@@ -1,23 +1,25 @@
 {
   "name": "behmand-co-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Backend server for Behmand Co (Express + MongoDB)",
+  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Mehdi",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^17.2.2",
+    "dotenv": "^16.4.5",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.2",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
-    "nodemailer": "^7.0.6"
+    "nodemailer": "^6.9.15"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
