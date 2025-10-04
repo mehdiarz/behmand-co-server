@@ -12,18 +12,24 @@ import adminRouter from "./src/routes/admin.js";
 import { adminAuth } from "./src/middleware/auth.js";
 import { createTransport } from "./src/config/mailer.js";
 import Resume from "./src/models/Resume.js";
-import customersRouter from './src/routes/Customer.js';
+import customersRouter from "./src/routes/Customer.js";
 import messagesRouter from "./src/routes/messages.js";
 import blogsRouter from "./src/routes/blog.js";
 
 const app = express();
 
-// CORS درست
+// ✅ CORS اصلاح‌شده
 app.use(cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PATCH", "DELETE"],
+    origin: [
+        "http://localhost:5173",
+        "https://behman-co.vercel.app"   // دامنه‌ی فرانت روی Vercel
+    ],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// برای اطمینان از پاسخ به preflight
+app.options("*", cors());
 
 app.use(morgan("dev"));
 app.use(express.json());
@@ -96,13 +102,17 @@ app.use("/api/admin", adminRouter);
 app.use("/api/resumes", adminAuth, resumesRouter);
 
 app.use("/api/customers", customersRouter);
-
 app.use("/api/messages", messagesRouter);
-
-app.use("/uploads", express.static("uploads")); // برای دسترسی به عکس‌ها و فایل‌ها
 app.use("/api/blogs", blogsRouter);
 
-// اجرای سرور
+// 📂 برای دسترسی به فایل‌های آپلود
+app.use("/uploads", express.static("uploads"));
+
+// 📌 health check route
+app.get("/", (req, res) => {
+    res.send("✅ API is running. Welcome to Behmand backend!");
+});
+
 const port = process.env.PORT || 5000;
 app.listen(port, () =>
     console.log(`🚀 Server running on http://localhost:${port}`)
