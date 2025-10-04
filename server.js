@@ -28,8 +28,7 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// برای اطمینان از پاسخ به preflight
-app.options("/api/*", cors());
+
 
 app.use(morgan("dev"));
 app.use(express.json());
