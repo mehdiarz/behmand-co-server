@@ -9,62 +9,62 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /* ---------- Label maps ---------- */
 const personalLabelMap = {
-    name: "نام",
-    family: "نام خانوادگی",
-    birthDate: "تاریخ تولد",
-    birthPlace: "محل تولد",
-    residenceAddress: "آدرس محل سکونت",
-    phoneHome: "تلفن منزل",
-    mobile: "موبایل",
-    email: "ایمیل",
-    gender: "جنسیت",
-    maritalStatus: "وضعیت تأهل",
-    childrenCount: "تعداد فرزندان",
-    religion: "مذهب",
-    militaryStatus: "وضعیت سربازی",
+  name: "نام",
+  family: "نام خانوادگی",
+  birthDate: "تاریخ تولد",
+  birthPlace: "محل تولد",
+  residenceAddress: "آدرس محل سکونت",
+  phoneHome: "تلفن منزل",
+  mobile: "موبایل",
+  email: "ایمیل",
+  gender: "جنسیت",
+  maritalStatus: "وضعیت تأهل",
+  childrenCount: "تعداد فرزندان",
+  religion: "مذهب",
+  militaryStatus: "وضعیت سربازی",
 };
 
 const eduLabelMap = {
-    institute: "مؤسسه/دانشگاه",
-    startDate: "تاریخ شروع",
-    endDate: "تاریخ پایان",
-    major: "رشته",
-    degree: "مدرک",
+  institute: "مؤسسه/دانشگاه",
+  startDate: "تاریخ شروع",
+  endDate: "تاریخ پایان",
+  major: "رشته",
+  degree: "مدرک",
 };
 
 const langLabelMap = {
-    name: "زبان",
-    reading: "خواندن",
-    writing: "نوشتن",
+  name: "زبان",
+  reading: "خواندن",
+  writing: "نوشتن",
 };
 
 const workLabelMap = {
-    period: "دوره/بازه زمانی",
-    company: "شرکت",
-    activityType: "نوع فعالیت",
-    employeesCount: "تعداد کارکنان",
-    manager: "مدیر مستقیم",
-    position: "سمت",
-    supervisedCount: "تعداد زیرمجموعه",
-    salaryStart: "حقوق شروع",
-    salaryEnd: "حقوق پایان",
-    description: "توضیحات",
-    reasonForLeaving: "دلیل ترک",
+  period: "دوره/بازه زمانی",
+  company: "شرکت",
+  activityType: "نوع فعالیت",
+  employeesCount: "تعداد کارکنان",
+  manager: "مدیر مستقیم",
+  position: "سمت",
+  supervisedCount: "تعداد زیرمجموعه",
+  salaryStart: "حقوق شروع",
+  salaryEnd: "حقوق پایان",
+  description: "توضیحات",
+  reasonForLeaving: "دلیل ترک",
 };
 
 const refereeLabelMap = {
-    name: "نام",
-    workplace: "محل کار",
-    position: "سمت",
-    phone: "تلفن",
+  name: "نام",
+  workplace: "محل کار",
+  position: "سمت",
+  phone: "تلفن",
 };
 
 /* ---------- Safe JSON parse ---------- */
 function safeParse(value) {
-    try {
-        if (typeof value === "string") return JSON.parse(value);
-    } catch {}
-    return value;
+  try {
+    if (typeof value === "string") return JSON.parse(value);
+  } catch {}
+  return value;
 }
 
 /* ---------- Professional HTML Template ---------- */
@@ -518,182 +518,192 @@ const htmlTemplate = `
 `;
 
 /* ---------- Helper functions ---------- */
-Handlebars.registerHelper('inc', function(value) {
-    return parseInt(value) + 1;
+Handlebars.registerHelper("inc", function (value) {
+  return parseInt(value) + 1;
 });
 
-Handlebars.registerHelper('contains', function(str, search) {
-    return String(str).includes(search);
+Handlebars.registerHelper("contains", function (str, search) {
+  return String(str).includes(search);
 });
 
 function normalize(value) {
-    if (value === undefined || value === null) return "";
-    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
-    if (Array.isArray(value)) return value.map(v => normalize(v)).join("، ");
-    if (typeof value === "object") {
-        try {
-            return Object.entries(value).map(([k, v]) => `${k}: ${normalize(v)}`).join(" | ");
-        } catch {
-            return JSON.stringify(value);
-        }
-    }
+  if (value === undefined || value === null) return "";
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  )
     return String(value);
+  if (Array.isArray(value)) return value.map((v) => normalize(v)).join("، ");
+  if (typeof value === "object") {
+    try {
+      return Object.entries(value)
+        .map(([k, v]) => `${k}: ${normalize(v)}`)
+        .join(" | ");
+    } catch {
+      return JSON.stringify(value);
+    }
+  }
+  return String(value);
 }
 
 /* ---------- Prepare data for template ---------- */
 function prepareTemplateData(data) {
-    // Personal info
-    const personalInfo = Object.entries(personalLabelMap)
-        .filter(([key]) => data[key] && data[key] !== "")
-        .map(([key, label]) => ({
-            label,
-            value: normalize(data[key])
-        }));
+  // Personal info
+  const personalInfo = Object.entries(personalLabelMap)
+    .filter(([key]) => data[key] && data[key] !== "")
+    .map(([key, label]) => ({
+      label,
+      value: normalize(data[key]),
+    }));
 
-    // Educations
-    const educations = (data.educations || []).map(edu =>
-        Object.entries(eduLabelMap)
-            .filter(([key]) => edu[key] && edu[key] !== "")
-            .map(([key, label]) => ({
-                label,
-                value: normalize(edu[key])
-            }))
-    );
+  // Educations
+  const educations = (data.educations || []).map((edu) =>
+    Object.entries(eduLabelMap)
+      .filter(([key]) => edu[key] && edu[key] !== "")
+      .map(([key, label]) => ({
+        label,
+        value: normalize(edu[key]),
+      })),
+  );
 
-    // Languages
-    const languages = (data.languages || []).map(lang =>
-        Object.entries(langLabelMap)
-            .filter(([key]) => lang[key] && lang[key] !== "")
-            .map(([key, label]) => ({
-                label,
-                value: normalize(lang[key])
-            }))
-    );
+  // Languages
+  const languages = (data.languages || []).map((lang) =>
+    Object.entries(langLabelMap)
+      .filter(([key]) => lang[key] && lang[key] !== "")
+      .map(([key, label]) => ({
+        label,
+        value: normalize(lang[key]),
+      })),
+  );
 
-    // Work histories
-    const workHistories = (data.workHistories || []).map(work =>
-        Object.entries(workLabelMap)
-            .filter(([key]) => work[key] && work[key] !== "")
-            .map(([key, label]) => ({
-                label,
-                value: normalize(work[key])
-            }))
-    );
+  // Work histories
+  const workHistories = (data.workHistories || []).map((work) =>
+    Object.entries(workLabelMap)
+      .filter(([key]) => work[key] && work[key] !== "")
+      .map(([key, label]) => ({
+        label,
+        value: normalize(work[key]),
+      })),
+  );
 
-    // Referees
-    const referees = (data.referees || []).map(ref =>
-        Object.entries(refereeLabelMap)
-            .filter(([key]) => ref[key] && ref[key] !== "")
-            .map(([key, label]) => ({
-                label,
-                value: normalize(ref[key])
-            }))
-    );
+  // Referees
+  const referees = (data.referees || []).map((ref) =>
+    Object.entries(refereeLabelMap)
+      .filter(([key]) => ref[key] && ref[key] !== "")
+      .map(([key, label]) => ({
+        label,
+        value: normalize(ref[key]),
+      })),
+  );
 
-    // Additional info
-    const additionalFields = {
-        skills: "مهارت‌ها",
-        jobRequested: "شغل مورد درخواست",
-        jobExperienceDuration: "مدت تجربه",
-        willingToWorkIn: "مایل به کار در",
-        monthsPerYearInOtherCity: "ماه‌های کار در شهرستان",
-        otherInfo: "سایر توضیحات"
-    };
+  // Additional info
+  const additionalFields = {
+    skills: "مهارت‌ها",
+    jobRequested: "شغل مورد درخواست",
+    jobExperienceDuration: "مدت تجربه",
+    willingToWorkIn: "مایل به کار در",
+    monthsPerYearInOtherCity: "ماه‌های کار در شهرستان",
+    otherInfo: "سایر توضیحات",
+  };
 
-    const additionalInfo = Object.entries(additionalFields)
-        .filter(([key]) => data[key] && data[key] !== "")
-        .map(([key, label]) => ({
-            label,
-            value: normalize(data[key])
-        }));
+  const additionalInfo = Object.entries(additionalFields)
+    .filter(([key]) => data[key] && data[key] !== "")
+    .map(([key, label]) => ({
+      label,
+      value: normalize(data[key]),
+    }));
 
-    return {
-        personalInfo,
-        educations,
-        languages,
-        workHistories,
-        referees,
-        additionalInfo
-    };
+  return {
+    personalInfo,
+    educations,
+    languages,
+    workHistories,
+    referees,
+    additionalInfo,
+  };
 }
 
 /* ---------- Main PDF Generation ---------- */
 export async function generateFormPDF(data, pdfPath) {
-    let browser = null;
+  let browser = null;
 
-    try {
-        console.log("📄 Starting Professional PDF generation for:", data.name, data.family);
+  try {
+    console.log(
+      "📄 Starting Professional PDF generation for:",
+      data.name,
+      data.family,
+    );
 
-        // Parse arrays
-        data.educations = safeParse(data.educations) || [];
-        data.languages = safeParse(data.languages) || [];
-        data.workHistories = safeParse(data.workHistories) || [];
-        data.referees = safeParse(data.referees) || [];
+    // Parse arrays
+    data.educations = safeParse(data.educations) || [];
+    data.languages = safeParse(data.languages) || [];
+    data.workHistories = safeParse(data.workHistories) || [];
+    data.referees = safeParse(data.referees) || [];
 
-        const dir = path.dirname(pdfPath);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-
-        // Prepare template data
-        const templateData = prepareTemplateData(data);
-
-        // Compile and render template
-        const template = Handlebars.compile(htmlTemplate);
-        const htmlContent = template(templateData);
-
-        // Launch Puppeteer with better configuration
-        browser = await puppeteer.launch({
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--disable-gpu'
-            ],
-            defaultViewport: {
-                width: 1200,
-                height: 1600
-            }
-        });
-
-        const page = await browser.newPage();
-
-        // Set content and wait for fonts and styles to load
-        await page.setContent(htmlContent, {
-            waitUntil: ['networkidle0', 'domcontentloaded']
-        });
-
-        // Wait for fonts to load
-        await page.evaluateHandle('document.fonts.ready');
-
-        // Generate high-quality PDF
-        await page.pdf({
-            path: pdfPath,
-            format: 'A4',
-            margin: {
-                top: '20px',
-                right: '20px',
-                bottom: '20px',
-                left: '20px'
-            },
-            printBackground: true,
-            preferCSSPageSize: true,
-            displayHeaderFooter: false
-        });
-
-        console.log("✅ Professional PDF generated successfully:", pdfPath);
-        return pdfPath;
-
-    } catch (error) {
-        console.error("❌ Error generating professional PDF:", error);
-        throw error;
-    } finally {
-        if (browser) {
-            await browser.close();
-        }
+    const dir = path.dirname(pdfPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
+
+    // Prepare template data
+    const templateData = prepareTemplateData(data);
+
+    // Compile and render template
+    const template = Handlebars.compile(htmlTemplate);
+    const htmlContent = template(templateData);
+
+    // Launch Puppeteer with better configuration
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--disable-gpu",
+      ],
+      defaultViewport: {
+        width: 1200,
+        height: 1600,
+      },
+    });
+
+    const page = await browser.newPage();
+
+    // Set content and wait for fonts and styles to load
+    await page.setContent(htmlContent, {
+      waitUntil: ["networkidle0", "domcontentloaded"],
+    });
+
+    // Wait for fonts to load
+    await page.evaluateHandle("document.fonts.ready");
+
+    // Generate high-quality PDF
+    await page.pdf({
+      path: pdfPath,
+      format: "A4",
+      margin: {
+        top: "20px",
+        right: "20px",
+        bottom: "20px",
+        left: "20px",
+      },
+      printBackground: true,
+      preferCSSPageSize: true,
+      displayHeaderFooter: false,
+    });
+
+    console.log("✅ Professional PDF generated successfully:", pdfPath);
+    return pdfPath;
+  } catch (error) {
+    console.error("❌ Error generating professional PDF:", error);
+    throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
 }
