@@ -15,64 +15,76 @@ import Resume from "./src/models/Resume.js";
 import customersRouter from "./src/routes/Customer.js";
 import messagesRouter from "./src/routes/messages.js";
 import blogsRouter from "./src/routes/blog.js";
+import { generateFormPDF } from "./src/utils/pdfGenerator.js"; // ✅ استفاده از نسخه‌ای که فونت رو از ریشه می‌خونه
 
 const app = express();
 
-// ✅ CORS اصلاح‌شده
+// ✅ CORS configuration
 app.use(cors({
     origin: [
         "http://localhost:5173",
-        "https://behman-co.vercel.app"   // دامنه‌ی فرانت روی Vercel
+        "https://behman-co.vercel.app"
     ],
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-
-
 app.use(morgan("dev"));
 app.use(express.json());
 
-// اتصال به دیتابیس
+// ✅ Connect to database
 await connectDB(process.env.MONGO_URI);
 
-// تنظیمات آپلود فایل با multer
+// ✅ File upload setup
 const uploadDir = process.env.UPLOAD_DIR || "uploads";
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({
-    destination: (_, __, cb) => cb(null, uploadDir),
-    filename: (_, file, cb) => {
-        const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        cb(null, unique + path.extname(file.originalname));
+    destination: (req, _, cb) => {
+        const personFolder = path.join(uploadDir, `${req.body.name}-${req.body.family}`);
+        if (!fs.existsSync(personFolder)) fs.mkdirSync(personFolder, { recursive: true });
+        cb(null, personFolder);
+    },
+    filename: (req, file, cb) => {
+        const personName = `${req.body.name}-${req.body.family}`;
+        cb(null, `${personName}-رزومه${path.extname(file.originalname)}`);
     },
 });
 const upload = multer({ storage });
 
-// 📌 مسیر ثبت رزومه + ذخیره در DB + ارسال ایمیل
+// ✅ Route for resume submission
 app.post("/api/resume", upload.single("file"), async (req, res) => {
     try {
-        const { name, email, message } = req.body;
+        const data = req.body;
+        console.log(data);
         const f = req.file;
 
         if (!f) {
-            return res
-                .status(400)
-                .json({ success: false, error: "فایل رزومه الزامی است" });
+            return res.status(400).json({ success: false, error: "فایل رزومه الزامی است" });
         }
 
-        // ذخیره در دیتابیس
+        // Parse arrays
+        data.educations = JSON.parse(data.educations || "[]");
+        data.languages = JSON.parse(data.languages || "[]");
+        data.workHistories = JSON.parse(data.workHistories || "[]");
+        data.referees = JSON.parse(data.referees || "[]");
+
+        // ✅ Generate PDF from form data
+        const personFolder = path.join(uploadDir, `${data.name}-${data.family}`);
+        const pdfPath = path.join(personFolder, `${data.name}-${data.family}-فورم.pdf`);
+        await generateFormPDF(data, pdfPath);
+
+        // ✅ Store in database
         const doc = await Resume.create({
-            name,
-            email,
-            message,
+            ...data,
             fileName: f.originalname,
             filePath: f.path,
             fileMime: f.mimetype,
             fileSize: f.size,
+            generatedPdfPath: pdfPath,
         });
 
-        // ارسال ایمیل نوتیفیکیشن
+        // ✅ Send email notification
         const transporter = createTransport({
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
@@ -80,10 +92,19 @@ app.post("/api/resume", upload.single("file"), async (req, res) => {
 
         await transporter.sendMail({
             from: process.env.EMAIL_USER,
-            to: process.env.NOTIFY_TO,
+            to: "job@behmand-co.com",
             subject: `رزومه جدید: ${doc.name}`,
-            text: `نام: ${doc.name}\nایمیل: ${doc.email}\n\n${doc.message || ""}`,
-            attachments: [{ filename: doc.fileName, path: doc.filePath }],
+            text: `نام: ${doc.name}\nایمیل: ${doc.email}\n\n${doc.otherInfo || ""}`,
+            attachments: [
+                {
+                    filename: `${doc.name}-${doc.family}-رزومه${path.extname(doc.fileName)}`,
+                    path: doc.filePath,
+                },
+                {
+                    filename: `${doc.name}-${doc.family}-فورم.pdf`,
+                    path: doc.generatedPdfPath,
+                },
+            ],
         });
 
         console.log("✅ Notification email sent");
@@ -94,25 +115,23 @@ app.post("/api/resume", upload.single("file"), async (req, res) => {
     }
 });
 
-// 📌 مسیر لاگین ادمین
+// ✅ Other routes
 app.use("/api/admin", adminRouter);
-
-// 📌 مسیرهای مدیریتی رزومه‌ها (فقط برای ادمین لاگین‌شده)
 app.use("/api/resumes", adminAuth, resumesRouter);
-
 app.use("/api/customers", customersRouter);
 app.use("/api/messages", messagesRouter);
 app.use("/api/blogs", blogsRouter);
 
-// 📂 برای دسترسی به فایل‌های آپلود
+// ✅ Serve uploaded files
 app.use("/uploads", express.static("uploads"));
 
-// 📌 health check route
+// ✅ Health check
 app.get("/", (req, res) => {
     res.send("✅ API is running. Welcome to Behmand backend!");
 });
 
+// ✅ Start server
 const port = process.env.PORT || 5000;
-app.listen(port, () =>
-    console.log(`🚀 Server running on http://localhost:${port}`)
-);
+app.listen(port, () => {
+    console.log(`🚀 Server running on http://localhost:${port}`);
+});
